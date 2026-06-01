@@ -1,0 +1,26 @@
+[
+    {
+        "id": "1",
+        "category": "HR Policy",
+        "question": "What is the company's remote work policy?",
+        "answer": "Employees are allowed to work remotely up to 3 days a week. Tuesdays and Thursdays are mandatory in-office days."
+    },
+    {
+        "id": "2",
+        "category": "Benefits",
+        "question": "How many vacation days do I get?",
+        "answer": "All full-time employees receive 20 days of paid time off (PTO) per year, plus 10 standard public holidays."
+    },
+    {
+        "id": "3",
+        "category": "IT Support",
+        "question": "How do I reset my password?",
+        "answer": "To reset your password, visit the IT self-service portal at myit.company.com and click 'Forgot Password'. You will need access to your secondary authentication device."
+    },
+    {
+        "id": "4",
+        "category": "General",
+        "question": "Where is the main office located?",
+        "answer": "Our main headquarters is located at 123 Tech Boulevard, Silicon Valley, CA 94043."
+    }
+]
