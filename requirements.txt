@@ -8,4 +8,5 @@ python-dotenv==1.0.1
 watchfiles==0.21.0
 psycopg2-binary==2.9.9
 pysqlite3-binary
+numpy<2.0.0
 
