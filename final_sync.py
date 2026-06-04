@@ -1,5 +1,6 @@
 import os
 import sys
+import shutil
 sys.path.append(os.getcwd())
 
 from app.services.adapters.postgres_adapter import sync_postgres_to_ai
@@ -11,6 +12,16 @@ def final_sync():
     # Use a brand new, unique ID to ensure zero interference
     app_id = "homeveda_production_final"
     
+    # Automatically delete local chroma_db if it exists to prevent dimension mismatches
+    chroma_path = os.path.join(os.getcwd(), "chroma_db")
+    if os.path.exists(chroma_path):
+        print(f"Deleting existing database at {chroma_path} to avoid conflicts...")
+        try:
+            shutil.rmtree(chroma_path)
+            print("Deleted old database successfully.")
+        except Exception as e:
+            print(f"Warning: Failed to delete old database: {e}")
+            
     print(f"Starting FINAL sync for {app_id}...")
     
     # 1. Sync Brands

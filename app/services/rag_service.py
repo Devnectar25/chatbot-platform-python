@@ -1,13 +1,63 @@
 import json
 import chromadb
-import ollama
+# import ollama
 import os
+import google.generativeai as genai
 from chromadb.utils import embedding_functions
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# Global cache for the multilingual embedding function to prevent re-loading weights on every request
+import time
+
+# Define custom embedding function using the already installed google-generativeai SDK
+class GeminiEmbeddingFunction(chromadb.EmbeddingFunction):
+    def __call__(self, input: chromadb.Documents) -> chromadb.Embeddings:
+        api_key = os.getenv("GOOGLE_GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
+        if api_key:
+            genai.configure(api_key=api_key)
+        else:
+            print("WARNING: GOOGLE_GEMINI_API_KEY or GEMINI_API_KEY not found in environment variables!")
+        
+        print(f"[GEMINI] Generating embeddings for {len(input)} documents...")
+        
+        # Split input into chunks of 50 to avoid Gemini API batch limit (100) and rate limits
+        chunk_size = 50
+        all_embeddings = []
+        
+        for i in range(0, len(input), chunk_size):
+            chunk = input[i:i + chunk_size]
+            print(f"[GEMINI] Embedding chunk {i//chunk_size + 1}/{(len(input)-1)//chunk_size + 1} (size: {len(chunk)})...")
+            
+            max_retries = 5
+            retry_delay = 20  # seconds
+            
+            for attempt in range(max_retries):
+                try:
+                    response = genai.embed_content(
+                        model="models/gemini-embedding-001",
+                        content=chunk,
+                        task_type="retrieval_document"
+                    )
+                    all_embeddings.extend(response['embedding'])
+                    break
+                except Exception as e:
+                    # If we hit a rate limit (429), sleep and retry
+                    if "429" in str(e) and attempt < max_retries - 1:
+                        print(f"[GEMINI] Rate limit hit (429). Retrying in {retry_delay}s... (Attempt {attempt+1}/{max_retries})")
+                        time.sleep(retry_delay)
+                        retry_delay += 20  # Incremental backoff
+                    else:
+                        raise e
+            
+            # Sleep briefly between successful chunks to avoid hitting rate limits
+            if i + chunk_size < len(input):
+                print("[GEMINI] Sleeping for 3 seconds to avoid rate limits...")
+                time.sleep(3)
+                
+        return all_embeddings
+
+# Global cache for the embedding function
 MULTILINGUAL_EF = None
 
 def get_chroma_collection():
@@ -19,10 +69,8 @@ def get_chroma_collection():
     print(f"[CHROMA] Using DB at: {_chroma_path}")
     
     if MULTILINGUAL_EF is None:
-        print("Initializing Multilingual Embedding Function...")
-        MULTILINGUAL_EF = embedding_functions.SentenceTransformerEmbeddingFunction(
-            model_name="paraphrase-multilingual-MiniLM-L12-v2"
-        )
+        print("Initializing Gemini Embedding Function (Custom)...")
+        MULTILINGUAL_EF = GeminiEmbeddingFunction()
     
     collection = client.get_or_create_collection(
         name="chatbot_knowledge_v3", 
@@ -85,48 +133,8 @@ def generate_chat_response(app_id: str, user_question: str, language: str = "en-
         # Join all found context snippets
         context = "\n---\n".join(results['documents'][0])
 
-    print(f"[{time.strftime('%H:%M:%S')}] Step 2: Generating streaming response from Ollama (qwen2:1.5b)...")
-    print(f"--- DEBUG CONTEXT START ---\n{context}\n--- DEBUG CONTEXT END ---")
-    
-    prompt = f"""
-    You are the "Official Homeveda AI Assistant", a professional and helpful expert on Ayurvedic health and products.
-    
-    CRITICAL INSTRUCTIONS:
-    1. Your primary knowledge source is the provided CONTEXT. 
-    2. If the CONTEXT contains information related to the USER QUESTION, you MUST use it to answer.
-    3. If the CONTEXT is empty or irrelevant, politely inform the user that you don't have that specific information in your database but offer to help with general Ayurvedic queries.
-    4. RESPOND ENTIRELY IN THE LANGUAGE: '{language}'.
-    5. Be warm, professional, and concise.
-    6. Do NOT mention internal terms like "CONTEXT" or "DATABASE" to the user.
-    7. Provide ONLY the final response text.
-    8. IMPORTANT: Do NOT use markdown image syntax like `![]()`. The system handles images separately.
-
-    CONTEXT FROM HOMEVEDA DATABASE:
-    {context}
-
-    USER QUESTION:
-    {user_question}
-    """
-
-    # 1. Generate the AI response
-    stream = ollama.generate(
-        model='qwen2:1.5b',
-        prompt=prompt,
-        stream=True
-    )
-    
-    full_text = ""
-    chunk_count = 0
-    for chunk in stream:
-        if chunk_count == 0:
-            print(f"[{time.strftime('%H:%M:%S')}] First chunk received from Ollama!")
-        chunk_count += 1
-        full_text += chunk['response']
-        clean_chunk = chunk['response'].replace('![]()', '').replace('![]', '').replace('()', '')
-        yield clean_chunk
-    
-    print(f"[{time.strftime('%H:%M:%S')}] Generation finished. Total chunks: {chunk_count}")
-    print(f"--- DEBUG FULL RESPONSE START ---\n{full_text}\n--- DEBUG FULL RESPONSE END ---")
+    print(f"[{time.strftime('%H:%M:%S')}] Step 2: Streaming response from Ollama is disabled (WhatsApp focus).")
+    yield "Ollama chatbot is currently disabled. Please use the WhatsApp chatbot route."
 
     # 2. Extract and Inject Image/Price directly (Bypassing LLM filters)
     # We only take from the MOST relevant snippet (the first one) to avoid mismatch
@@ -164,9 +172,9 @@ def warmup_models():
     # 1. Warm up the Multilingual Embedding Model
     get_chroma_collection()
     
-    # 2. Warm up Ollama (qwen2:1.5b)
-    try:
-        ollama.generate(model='qwen2:1.5b', prompt='ping', keep_alive='5m')
-        print("Models warmed up successfully!")
-    except Exception as e:
-        print(f"Ollama warm-up failed: {e}")
+    # 2. Warm up Ollama (Disabled)
+    # try:
+    #     ollama.generate(model='qwen2:1.5b', prompt='ping', keep_alive='5m')
+    #     print("Models warmed up successfully!")
+    # except Exception as e:
+    #     print(f"Ollama warm-up failed: {e}")
