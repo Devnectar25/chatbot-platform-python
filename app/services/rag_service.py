@@ -1,9 +1,7 @@
 import json
-import chromadb
 # import ollama
 import os
 import google.generativeai as genai
-from chromadb.utils import embedding_functions
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -11,8 +9,8 @@ load_dotenv()
 import time
 
 # Define custom embedding function using the already installed google-generativeai SDK
-class GeminiEmbeddingFunction(chromadb.EmbeddingFunction):
-    def __call__(self, input: chromadb.Documents) -> chromadb.Embeddings:
+class GeminiEmbeddingFunction:
+    def __call__(self, input: list[str]) -> list[list[float]]:
         api_key = os.getenv("GOOGLE_GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
         if api_key:
             genai.configure(api_key=api_key)
@@ -65,6 +63,9 @@ def get_chroma_collection():
     # Use absolute path so it works regardless of which directory the server is launched from
     _base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     _chroma_path = os.path.join(_base_dir, "chroma_db")
+    
+    # Lazy import to avoid loading heavy modules on startup
+    import chromadb
     client = chromadb.PersistentClient(path=_chroma_path)
     print(f"[CHROMA] Using DB at: {_chroma_path}")
     
