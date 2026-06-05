@@ -40,7 +40,9 @@ def check_env():
         val = os.getenv(var)
         status[var] = {
             "configured": val is not None and len(val.strip()) > 0,
-            "length": len(val) if val else 0
+            "length": len(val) if val else 0,
+            "prefix": val[:12] if val else "",
+            "suffix": val[-5:] if val else ""
         }
     return {
         "status": "ok",
