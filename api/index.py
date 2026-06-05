@@ -1,6 +1,16 @@
 import sys
 import os
 
+# Clean environment variables from copy-paste errors (like KEY=value instead of just value)
+for _k, _v in list(os.environ.items()):
+    if _v:
+        _cleaned = _v.strip().strip("'\"")
+        if _cleaned.startswith(f"{_k}="):
+            _cleaned = _cleaned[len(_k)+1:].strip().strip("'\"")
+        if _cleaned != _v:
+            print(f"[ENV_CLEAN] Cleaned environment variable: {_k}")
+            os.environ[_k] = _cleaned
+
 # Override sqlite3 with pysqlite3 for ChromaDB to run on Vercel
 try:
     __import__('pysqlite3')
