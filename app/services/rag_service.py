@@ -10,6 +10,13 @@ import time
 
 # Define custom embedding function using the already installed google-generativeai SDK
 class GeminiEmbeddingFunction:
+    @staticmethod
+    def name() -> str:
+        return "gemini-embedding"
+
+    def embed_query(self, input: list[str]) -> list[list[float]]:
+        return self(input)
+
     def __call__(self, input: list[str]) -> list[list[float]]:
         api_key = os.getenv("GOOGLE_GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
         if api_key:
@@ -64,6 +71,18 @@ def get_chroma_collection():
     _base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     _chroma_path = os.path.join(_base_dir, "chroma_db")
     
+    if os.getenv("VERCEL") == "1":
+        _tmp_chroma_path = "/tmp/chroma_db"
+        if not os.path.exists(_tmp_chroma_path):
+            print(f"[VERCEL] Copying ChromaDB from {_chroma_path} to {_tmp_chroma_path}...")
+            import shutil
+            try:
+                shutil.copytree(_chroma_path, _tmp_chroma_path, dirs_exist_ok=True)
+                print("[VERCEL] Copy completed successfully.")
+            except Exception as copy_err:
+                print(f"[VERCEL ERROR] Failed to copy ChromaDB: {copy_err}")
+        _chroma_path = _tmp_chroma_path
+
     # Lazy import to avoid loading heavy modules on startup
     import chromadb
     client = chromadb.PersistentClient(path=_chroma_path)

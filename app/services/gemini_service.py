@@ -7,12 +7,13 @@ from .rag_service import get_chroma_collection
 load_dotenv()
 
 # Setup Gemini
+model = None
 api_key = os.getenv("GOOGLE_GEMINI_API_KEY")
 if api_key:
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel('gemini-flash-lite-latest')
 else:
-    print("WARNING: GOOGLE_GEMINI_API_KEY not found in .env")
+    print("WARNING: GOOGLE_GEMINI_API_KEY not found in environment variables!")
 
 APP_ID = "homeveda_production_final"
 
@@ -53,6 +54,17 @@ def generate_whatsapp_response(user_question: str, language: str = "en-IN"):
     WhatsApp specific response generator using Google Gemini.
     Returns a dict with 'text' and 'image_url'.
     """
+    global model
+    if model is None:
+        api_key = os.getenv("GOOGLE_GEMINI_API_KEY")
+        if api_key:
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel('gemini-flash-lite-latest')
+            
+    if model is None:
+        print("[ERROR] Gemini Model is not initialized. GOOGLE_GEMINI_API_KEY is missing!")
+        return {"text": "Error: Chatbot configuration is incomplete. Please ensure that GOOGLE_GEMINI_API_KEY is configured in your project environment variables.", "image_url": ""}
+
     question_lower = user_question.lower()
 
     # Define conversational intents
