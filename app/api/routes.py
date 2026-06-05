@@ -122,10 +122,14 @@ async def handle_whatsapp_webhook(request: Request):
                 
             return {"status": "success"}
     except Exception as e:
+        import traceback
         safe_err = str(e).encode('ascii', errors='ignore').decode('ascii')
         print(f"Webhook Error: {safe_err}")
-        
-    return {"status": "ignored"}
+        return {
+            "status": "error",
+            "error": safe_err,
+            "traceback": traceback.format_exc()
+        }
 
 class ChatRequest(BaseModel):
     app_id: str
