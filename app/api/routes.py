@@ -20,6 +20,34 @@ def test_whatsapp():
     res = send_whatsapp_message(test_number, "Hello! This is a direct test message from your server (No AI). If you see this, your WhatsApp API is WORKING!")
     return res
 
+@router.get("/check-env")
+def check_env():
+    """Checks if the required environment variables are set without exposing them"""
+    required_vars = [
+        "GOOGLE_GEMINI_API_KEY",
+        "WHATSAPP_ACCESS_TOKEN",
+        "WHATSAPP_PHONE_NUMBER_ID",
+        "WHATSAPP_BUSINESS_ACCOUNT_ID",
+        "WHATSAPP_VERIFY_TOKEN",
+        "PGHOST",
+        "PGPORT",
+        "PGUSER",
+        "PGPASSWORD",
+        "PGDATABASE"
+    ]
+    status = {}
+    for var in required_vars:
+        val = os.getenv(var)
+        status[var] = {
+            "configured": val is not None and len(val.strip()) > 0,
+            "length": len(val) if val else 0
+        }
+    return {
+        "status": "ok",
+        "environment": status,
+        "is_vercel": os.getenv("VERCEL") == "1"
+    }
+
 # --- WHATSAPP WEBHOOK ROUTES ---
 
 @router.get("/webhook/whatsapp")
