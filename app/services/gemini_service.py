@@ -6,14 +6,8 @@ from .rag_service import get_chroma_collection
 
 load_dotenv()
 
-# Setup Gemini
+# Setup Gemini lazily inside the response handler
 model = None
-api_key = os.getenv("GOOGLE_GEMINI_API_KEY")
-if api_key:
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-flash-lite-latest')
-else:
-    print("WARNING: GOOGLE_GEMINI_API_KEY not found in environment variables!")
 
 APP_ID = "homeveda_production_final"
 
