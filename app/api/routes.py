@@ -39,27 +39,13 @@ def check_env():
     for var in required_vars:
         val = os.getenv(var)
         status[var] = {
-            "configured": val is not None and len(val.strip()) > 0,
-            "length": len(val) if val else 0,
-            "prefix": val[:12] if val else "",
-            "suffix": val[-5:] if val else ""
+            "configured": val is not None and len(val.strip()) > 0
         }
-    # Check for libgomp.so.1 in system paths
-    libgomp_locations = [
-        "/usr/lib64/libgomp.so.1",
-        "/usr/lib/libgomp.so.1",
-        "/lib64/libgomp.so.1",
-        "/lib/libgomp.so.1",
-        "/usr/lib/x86_64-linux-gnu/libgomp.so.1",
-        "/lib/x86_64-linux-gnu/libgomp.so.1"
-    ]
-    found_libgomp = [loc for loc in libgomp_locations if os.path.exists(loc)]
 
     return {
         "status": "ok",
         "environment": status,
-        "is_vercel": os.getenv("VERCEL") == "1",
-        "found_libgomp": found_libgomp
+        "is_vercel": os.getenv("VERCEL") == "1"
     }
 
 # --- WHATSAPP WEBHOOK ROUTES ---
@@ -137,10 +123,10 @@ async def handle_whatsapp_webhook(request: Request):
         import traceback
         safe_err = str(e).encode('ascii', errors='ignore').decode('ascii')
         print(f"Webhook Error: {safe_err}")
+        traceback.print_exc()
         return {
             "status": "error",
-            "error": safe_err,
-            "traceback": traceback.format_exc()
+            "message": "An internal error occurred while processing the request."
         }
 
 class ChatRequest(BaseModel):
