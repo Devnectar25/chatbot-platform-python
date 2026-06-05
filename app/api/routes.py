@@ -44,10 +44,22 @@ def check_env():
             "prefix": val[:12] if val else "",
             "suffix": val[-5:] if val else ""
         }
+    # Check for libgomp.so.1 in system paths
+    libgomp_locations = [
+        "/usr/lib64/libgomp.so.1",
+        "/usr/lib/libgomp.so.1",
+        "/lib64/libgomp.so.1",
+        "/lib/libgomp.so.1",
+        "/usr/lib/x86_64-linux-gnu/libgomp.so.1",
+        "/lib/x86_64-linux-gnu/libgomp.so.1"
+    ]
+    found_libgomp = [loc for loc in libgomp_locations if os.path.exists(loc)]
+
     return {
         "status": "ok",
         "environment": status,
-        "is_vercel": os.getenv("VERCEL") == "1"
+        "is_vercel": os.getenv("VERCEL") == "1",
+        "found_libgomp": found_libgomp
     }
 
 # --- WHATSAPP WEBHOOK ROUTES ---
