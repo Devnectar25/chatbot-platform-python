@@ -65,38 +65,128 @@ class GeminiEmbeddingFunction:
 # Global cache for the embedding function
 MULTILINGUAL_EF = None
 
+class SQLiteFallbackCollection:
+    def __init__(self, db_path: str):
+        self.db_path = db_path
+
+    def _get_records(self, app_id: str, record_type: str = None) -> list:
+        import sqlite3
+        import json
+        import struct
+        
+        conn = sqlite3.connect(self.db_path)
+        cur = conn.cursor()
+        try:
+            cur.execute("SELECT id, vector, metadata FROM embeddings_queue")
+            rows = cur.fetchall()
+        except Exception as db_err:
+            print(f"[FALLBACK DB ERROR] Failed to fetch embeddings: {db_err}")
+            rows = []
+        finally:
+            conn.close()
+
+        records = []
+        for doc_id, vec_blob, meta_json in rows:
+            meta = json.loads(meta_json)
+            if meta.get("app_id") == app_id:
+                if record_type and meta.get("type") != record_type:
+                    continue
+                dim = len(vec_blob) // 4
+                vector = struct.unpack(f"{dim}f", vec_blob)
+                records.append({
+                    "id": doc_id,
+                    "document": meta.get("chroma:document", ""),
+                    "vector": vector,
+                    "metadata": meta
+                })
+        return records
+
+    def get(self, where: dict = None) -> dict:
+        app_id = None
+        record_type = None
+        if where:
+            if "app_id" in where:
+                app_id = where["app_id"]
+            elif "$and" in where:
+                for cond in where["$and"]:
+                    if "app_id" in cond:
+                        app_id = cond["app_id"]
+                    if "type" in cond:
+                        record_type = cond["type"]
+        
+        if not app_id:
+            app_id = "homeveda_production_final"
+
+        records = self._get_records(app_id, record_type)
+        return {
+            "ids": [r["id"] for r in records],
+            "documents": [r["document"] for r in records],
+            "metadatas": [r["metadata"] for r in records]
+        }
+
+    def query(self, query_texts: list[str], n_results: int = 5, where: dict = None) -> dict:
+        app_id = where.get("app_id") if where else "homeveda_production_final"
+        records = self._get_records(app_id)
+        if not records:
+            return {"ids": [[]], "documents": [[]], "metadatas": [[]], "distances": [[]]}
+
+        import google.generativeai as genai
+        import os
+        api_key = os.getenv("GOOGLE_GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
+        if api_key:
+            genai.configure(api_key=api_key)
+        
+        print(f"[FALLBACK SEARCH] Embedding query: '{query_texts[0]}'...")
+        response = genai.embed_content(
+            model="models/gemini-embedding-001",
+            content=query_texts,
+            task_type="retrieval_document"
+        )
+        q_vec = response['embedding'][0]
+
+        similarities = []
+        for r in records:
+            sim = sum(x * y for x, y in zip(q_vec, r["vector"]))
+            dist = 1.0 - sim
+            similarities.append((dist, r))
+
+        similarities.sort(key=lambda x: x[0])
+        top_matches = similarities[:n_results]
+
+        return {
+            "ids": [[m[1]["id"] for m in top_matches]],
+            "documents": [[m[1]["document"] for m in top_matches]],
+            "metadatas": [[m[1]["metadata"] for m in top_matches]],
+            "distances": [[m[0] for m in top_matches]]
+        }
+
 def get_chroma_collection():
     global MULTILINGUAL_EF
-    # Use absolute path so it works regardless of which directory the server is launched from
     _base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     _chroma_path = os.path.join(_base_dir, "chroma_db")
     
-    if os.getenv("VERCEL") == "1":
-        _tmp_chroma_path = "/tmp/chroma_db"
-        if not os.path.exists(_tmp_chroma_path):
-            print(f"[VERCEL] Copying ChromaDB from {_chroma_path} to {_tmp_chroma_path}...")
-            import shutil
-            try:
+    try:
+        if os.getenv("VERCEL") == "1":
+            _tmp_chroma_path = "/tmp/chroma_db"
+            if not os.path.exists(_tmp_chroma_path):
+                print(f"[VERCEL] Copying ChromaDB from {_chroma_path} to {_tmp_chroma_path}...")
+                import shutil
                 shutil.copytree(_chroma_path, _tmp_chroma_path, dirs_exist_ok=True)
-                print("[VERCEL] Copy completed successfully.")
-            except Exception as copy_err:
-                print(f"[VERCEL ERROR] Failed to copy ChromaDB: {copy_err}")
-        _chroma_path = _tmp_chroma_path
+            _chroma_path = _tmp_chroma_path
 
-    # Lazy import to avoid loading heavy modules on startup
-    import chromadb
-    client = chromadb.PersistentClient(path=_chroma_path)
-    print(f"[CHROMA] Using DB at: {_chroma_path}")
-    
-    if MULTILINGUAL_EF is None:
-        print("Initializing Gemini Embedding Function (Custom)...")
-        MULTILINGUAL_EF = GeminiEmbeddingFunction()
-    
-    collection = client.get_or_create_collection(
-        name="chatbot_knowledge_v3", 
-        embedding_function=MULTILINGUAL_EF
-    )
-    return collection
+        import chromadb
+        client = chromadb.PersistentClient(path=_chroma_path)
+        if MULTILINGUAL_EF is None:
+            MULTILINGUAL_EF = GeminiEmbeddingFunction()
+        collection = client.get_or_create_collection(
+            name="chatbot_knowledge_v3", 
+            embedding_function=MULTILINGUAL_EF
+        )
+        return collection
+    except Exception as err:
+        print(f"[CHROMA FALLBACK] Cannot load ChromaDB client ({err}). Using built-in SQLite search engine.")
+        db_file_path = os.path.join(_chroma_path, "chroma.sqlite3")
+        return SQLiteFallbackCollection(db_file_path)
 
 def ingest_raw_documents(app_id: str, documents: list, metadatas: list, ids: list):
     """
