@@ -160,33 +160,64 @@ class SQLiteFallbackCollection:
             "distances": [[m[0] for m in top_matches]]
         }
 
+    def add(self, documents: list, metadatas: list, ids: list):
+        import sqlite3
+        import struct
+        import json
+        import google.generativeai as genai
+        import os
+        
+        api_key = os.getenv("GOOGLE_GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
+        if api_key:
+            genai.configure(api_key=api_key)
+            
+        print("[FALLBACK DB] Generating embeddings for ingestion...")
+        
+        all_embeddings = []
+        chunk_size = 50
+        for i in range(0, len(documents), chunk_size):
+            chunk = documents[i:i + chunk_size]
+            response = genai.embed_content(
+                model="models/gemini-embedding-001",
+                content=chunk,
+                task_type="retrieval_document"
+            )
+            all_embeddings.extend(response['embedding'])
+        
+        conn = sqlite3.connect(self.db_path)
+        cur = conn.cursor()
+                       
+        for doc_id, doc, meta, vec in zip(ids, documents, metadatas, all_embeddings):
+            meta["chroma:document"] = doc
+            vec_blob = struct.pack(f"{len(vec)}f", *vec)
+            meta_json = json.dumps(meta)
+            cur.execute("INSERT INTO embeddings_queue (operation, topic, id, vector, metadata) VALUES (0, 'default', ?, ?, ?)",
+                        (doc_id, vec_blob, meta_json))
+        conn.commit()
+        conn.close()
+        
+    def delete(self, where: dict = None):
+        import sqlite3
+        conn = sqlite3.connect(self.db_path)
+        cur = conn.cursor()
+        try:
+            if where and "app_id" in where:
+                app_id = where["app_id"]
+                cur.execute("DELETE FROM embeddings_queue WHERE metadata LIKE ?", (f'%"{app_id}"%',))
+            else:
+                cur.execute("DELETE FROM embeddings_queue")
+        except Exception:
+            pass
+        conn.commit()
+        conn.close()
+
 def get_chroma_collection():
-    global MULTILINGUAL_EF
     _base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     _chroma_path = os.path.join(_base_dir, "chroma_db")
-    
-    try:
-        if os.getenv("VERCEL") == "1":
-            _tmp_chroma_path = "/tmp/chroma_db"
-            if not os.path.exists(_tmp_chroma_path):
-                print(f"[VERCEL] Copying ChromaDB from {_chroma_path} to {_tmp_chroma_path}...")
-                import shutil
-                shutil.copytree(_chroma_path, _tmp_chroma_path, dirs_exist_ok=True)
-            _chroma_path = _tmp_chroma_path
-
-        import chromadb
-        client = chromadb.PersistentClient(path=_chroma_path)
-        if MULTILINGUAL_EF is None:
-            MULTILINGUAL_EF = GeminiEmbeddingFunction()
-        collection = client.get_or_create_collection(
-            name="chatbot_knowledge_v3", 
-            embedding_function=MULTILINGUAL_EF
-        )
-        return collection
-    except Exception as err:
-        print(f"[CHROMA FALLBACK] Cannot load ChromaDB client ({err}). Using built-in SQLite search engine.")
-        db_file_path = os.path.join(_chroma_path, "chroma.sqlite3")
-        return SQLiteFallbackCollection(db_file_path)
+    if not os.path.exists(_chroma_path):
+        os.makedirs(_chroma_path)
+    db_file_path = os.path.join(_chroma_path, "chroma.sqlite3")
+    return SQLiteFallbackCollection(db_file_path)
 
 def ingest_raw_documents(app_id: str, documents: list, metadatas: list, ids: list):
     """

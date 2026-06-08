@@ -9,7 +9,7 @@ load_dotenv()
 # Setup Gemini lazily inside the response handler
 model = None
 
-APP_ID = "homeveda_production_final"
+APP_ID = "devnectar_production"
 
 # Keywords that indicate the user wants a full list
 LIST_KEYWORDS = {
@@ -62,7 +62,7 @@ def generate_whatsapp_response(user_question: str, language: str = "en-IN"):
     question_lower = user_question.lower()
 
     # Define conversational intents
-    GREETINGS = {"hi", "hello", "hey", "namaste", "good morning", "good afternoon", "good evening", "greetings"}
+    GREETINGS = {"hi", "hii", "hiii", "hello", "hey", "heyy", "namaste", "good morning", "good afternoon", "good evening", "greetings"}
     THANKS = {"thanks", "thank you", "ty", "appreciate it", "great", "awesome", "perfect", "ok", "okay"}
     FAREWELLS = {"bye", "goodbye", "see ya", "talk later"}
     
@@ -77,14 +77,13 @@ def generate_whatsapp_response(user_question: str, language: str = "en-IN"):
 
     if is_conversational:
         print(f"[CONVERSATIONAL INTENT DETECTED] Processing '{clean_q}' as clean conversation.")
-        prompt = f"""You are the Official Homeveda WhatsApp Assistant.
-Homeveda is an Ayurvedic and wellness e-commerce platform.
+        prompt = f"""You are the Official devNectar WhatsApp Assistant.
+devNectar is a professional software development firm.
 
 STRICT RULES:
 1. Respond politely, warmly, and concisely to the user's input.
 2. Keep the conversation natural, friendly, and very brief.
-3. Do NOT list any products, brands, coupons, or offers in this conversational response.
-4. If the user said thanks, acknowledge it warmly (e.g. "You're welcome! Let me know if you need anything else.").
+3. If the user said thanks, acknowledge it warmly (e.g. "You're welcome! Let me know if you need anything else.").
 
 USER CONVERSATIONAL INPUT: {user_question}
 
@@ -138,17 +137,17 @@ Answer:"""
             context = ""
 
     if not context:
-        context = "No specific data found. Answer from your general Homeveda knowledge."
+        context = "No specific data found. Answer from your general devNectar knowledge."
 
     safe_context = context[:300].encode('ascii', 'ignore').decode('ascii')
     print(f"--- CONTEXT ---\n{safe_context}...\n--- END CONTEXT ---")
 
     # Build Prompt
-    prompt = f"""You are the Official Homeveda WhatsApp Assistant.
-Homeveda is an Ayurvedic and wellness e-commerce platform.
+    prompt = f"""You are the Official devNectar WhatsApp Assistant.
+devNectar is a professional software development firm.
 
 STRICT RULES:
-1. Use the CONTEXT below to answer. If it lists brands/categories/coupons, list them ALL clearly.
+1. Use the CONTEXT below to answer.
 2. Never say "I don't have information" if the CONTEXT has relevant data.
 3. Keep responses concise and WhatsApp-friendly (use bullet points or numbered lists when listing items).
 4. Never mention "CONTEXT" or "DATABASE" to the user.
