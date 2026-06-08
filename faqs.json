@@ -1,0 +1,145 @@
+[
+    {
+        "question": "Hello",
+        "answer": "Hello! How can I help you today?"
+    },
+    {
+        "question": "Hi",
+        "answer": "Hi there! What can I do for you?"
+    },
+    {
+        "question": "Who are you?",
+        "answer": "I am the devNectar assistant, here to help you with information about our team, services, and how to get started."
+    },
+    {
+        "question": "Who am I?",
+        "answer": "You are a valued visitor! Tell me how I can assist you today."
+    },
+    {
+        "question": "How are you?",
+        "answer": "I'm just a bot, but I'm doing great! How can I assist you today?"
+    },
+    {
+        "question": "What can you do?",
+        "answer": "I can answer questions about devNectar's services, team, pricing, and how to start a project with us."
+    },
+    {
+        "question": "What is devNectar?",
+        "answer": "devNectar is a professional software development firm specializing in custom web, mobile, and cloud solutions."
+    },
+    {
+        "question": "What services do you provide?",
+        "answer": "We provide Web Development, Mobile App Development, AI/ML Solutions, Cloud Services (Azure/AWS), and Technical Consulting.",
+        "redirect": "/services"
+    },
+    {
+        "question": "How do I start a project with devNectar?",
+        "answer": "You can start by filling out the form on our Contact page or emailing us at sales@devnectar.in for a free consultation.",
+        "redirect": "/contact"
+    },
+    {
+        "question": "Who is the CEO of devNectar?",
+        "answer": "The CEO of devNectar is Vinod mahajan, a visionary leader with extensive experience in the technology industry."
+    },
+    {
+        "question": "Who is the Manager at devNectar?",
+        "answer": "Sagar mali serves as the Manager at devNectar, overseeing project delivery and operational excellence."
+    },
+    {
+        "question": "Who is the HR at devNectar?",
+        "answer": "Akshita bagul is our HR professional, managing talent acquisition and employee relations."
+    },
+    {
+        "question": "How many employees are in the devNectar team?",
+        "answer": "We have a dedicated working team of 15 skilled professionals committed to delivering high-quality software solutions."
+    },
+    {
+        "question": "What is your office address?",
+        "answer": "devNectar operates primarily in Pune. Our Office location is 827,8th Floor , Suratwala mark Plazzo, Hinjewadi phase-1 ,Pune ,Maharastra. If you want to visit our office please contact us sale@devNector.in ."
+    },
+    {
+        "question": "What industries do you serve?",
+        "answer": "We serve a wide range of industries including FinTech, E-commerce, Healthcare, Logistics, and EdTech."
+    },
+    {
+        "question": "What technologies do you use for web development?",
+        "answer": "We primarily use React, Node.js, TypeScript, and Tailwind CSS, along with various backend technologies like PostgreSQL and MongoDB."
+    },
+    {
+        "question": "Do you offer mobile app development?",
+        "answer": "Yes, we develop cross-platform mobile applications using React Native and Flutter."
+    },
+    {
+        "question": "Where is devNectar located?",
+        "answer": "devNectar operates primarily in Pune, providing expert software services to clients globally."
+    },
+    {
+        "question": "How long does a typical project take?",
+        "answer": "Project timelines vary; simple apps may take 4-8 weeks, while complex enterprise solutions can take 3-6 months."
+    },
+    {
+        "question": "What is your pricing model?",
+        "answer": "We offer flexible pricing models including fixed-price projects and time-and-materials based on your requirements."
+    },
+    {
+        "question": "Do you provide maintenance and support?",
+        "answer": "Yes, we offer ongoing maintenance and support packages to ensure your software remains secure and up-to-date."
+    },
+    {
+        "question": "Can you sign an NDA?",
+        "answer": "Yes, we prioritize confidentiality. We are happy to sign a Non-Disclosure Agreement (NDA) before discussing your project details."
+    },
+    {
+        "question": "How do you ensure code quality?",
+        "answer": "We follow industry best practices including code reviews, automated testing, and continuous integration to ensure high-quality, maintainable code."
+    },
+    {
+        "question": "Do you provide UI/UX design services?",
+        "answer": "Yes, our team includes talented designers who can create intuitive and visually stunning user interfaces for your web or mobile applications."
+    },
+    {
+        "question": "Can you scale my existing application?",
+        "answer": "Absolutely! We specialize in optimizing and scaling existing applications to handle increased traffic and performance demands."
+    },
+    {
+        "question": "What makes devNectar different?",
+        "answer": "Our commitment to precision, innovation, and client success sets us apart. We don't just write code; we build solutions that drive business value."
+    },
+    {
+        "question": "What technologies do you work with?",
+        "answer": "We work with all modern technologies including Sharepoint, Power Platform, Azure, React, Node.js, Python, AWS, Docker, PostgreSQL, MongoDB, React Native, Flutter, and many more. Our team stays updated with the latest tech trends."
+    },
+    {
+        "question": "Do you provide ongoing support?",
+        "answer": "Yes! We offer comprehensive support packages including bug fixes, updates, monitoring, and feature enhancements. Our support plans range from 30 days to ongoing monthly maintenance contracts."
+    },
+    {
+        "question": "Can you work with our existing team?",
+        "answer": "Absolutely! We excel at collaborative development and can seamlessly integrate with your existing team, processes, and tools. We adapt to your workflow and communication preferences."
+    },
+    {
+        "question": "What is your development process?",
+        "answer": "We follow an agile methodology with regular sprints, daily standups, and continuous client communication. Our process includes discovery, planning, development, testing, and deployment phases with regular feedback loops."
+    },
+    {
+        "question": "How do you ensure project quality?",
+        "answer": "We maintain high quality through code reviews, automated testing, continuous integration, security audits, and performance optimization. Every project follows our quality checklist before delivery."
+    },
+    {
+        "question": "who is yogesh",
+        "answer": "yogesh is the employee of the devenectar"
+    },
+    {
+        "question": "how many employees are in your team",
+        "answer": "devNectar has a dedicated team of 15 skilled professionals, including developers, designers, and project managers."
+    },
+    {
+        "question": "who is aniket",
+        "answer": "aniket is the employee of devnectar"
+    },
+    {
+        "question": "Can I see your portfolio of projects?",
+        "answer": "Certainly! We have successfully delivered a wide range of projects across various industries. You can explore our work, case studies, and core expertise on our portfolio page.",
+        "redirect": "/portfolio"
+    }
+]
